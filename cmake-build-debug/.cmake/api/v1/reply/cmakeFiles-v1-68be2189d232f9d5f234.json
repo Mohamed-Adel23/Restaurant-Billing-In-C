@@ -434,8 +434,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "D:/C/Restaurant/cmake-build-debug",
-		"source" : "D:/C/Restaurant"
+		"build" : "D:/C/Restaurant/restaurant-billing/cmake-build-debug",
+		"source" : "D:/C/Restaurant/restaurant-billing"
 	},
 	"version" : 
 	{
