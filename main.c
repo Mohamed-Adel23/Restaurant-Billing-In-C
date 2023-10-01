@@ -8,6 +8,7 @@
 // Day(1) => 26-9-2023
 // Day(2) => 28-9-2023
 // Day(3) => 30-9-2023
+// Day(4) => 1-10-2023
 
 
 #include <stdio.h>
@@ -31,10 +32,13 @@ struct Orders {
 void greeting();
 void customerData();
 char *removeSpaces(char *name);
+bool makeAnotherOperation();
 void generateInvoice(struct Orders order);
 void invoiceHeader(char *customerName, char *date);
 void invoiceBody(struct Items item, int count);
 void invoiceFooter(double totalPrice, double discount);
+void allInvoices();
+void searchInvoice();
 
 int main() {
     printf("\t======================================\n");
@@ -42,18 +46,6 @@ int main() {
     printf("\t======================================\n");
     // Greeting Function
     greeting();
-
-    /* {
-        printf("Name is: ");
-        char name[50];
-        fgets(name, 50, stdin);
-        printf("Welcome %s and The Length: %d", name, strlen(name));
-
-        printf("Number is: ");
-        int n;
-        scanf("%d", &n);
-        printf("The Number is %d", n);
-    } */
 
     // Receiving The Choice From The User
     while(true) {
@@ -63,29 +55,36 @@ int main() {
         getchar();
 
         if (choice == 1) { // Create New Invoice
-
             customerData();
 
-            printf("Do You Want To Make Another Operation [y/n]?");
-            char c;
-            scanf("%c", &c);
-            if(c == 'n') break;
-            printf("\n---------------------------------------------\n");
-            greeting();
-
+            if(makeAnotherOperation()) {
+                printf("\n---------------------------------------------\n");
+                greeting();
+            }
+            else break;
         }
-        else if (choice == 2) {
-            // Your Code
+        else if (choice == 2) { // Show All Invoices
+            allInvoices();
 
+            if(makeAnotherOperation()) {
+                printf("\n---------------------------------------------\n");
+                greeting();
+            }
+            else break;
         }
-        else if (choice == 3) {
-            // Your Code
+        else if (choice == 3) { // Search About Specific Invoice By Customer Name
+            searchInvoice();
 
+            if(makeAnotherOperation()) {
+                printf("\n---------------------------------------------\n");
+                greeting();
+            }
+            else break;
         }
-        else if (choice == 4) {
+        else if (choice == 4) { // Exit From The Program
             break;
         }
-        else {
+        else { // Invalid Input
             printf("=> Your Choice Is Not Available, Try Again!! <=\n");
         }
     }
@@ -128,28 +127,36 @@ void greeting() {
     printf("  4. EXIT.\n-----------------------\n");
 }
 
+bool makeAnotherOperation() {
+    printf("Do You Want To Make Another Operation [y/n]?");
+    char c;
+    scanf("%c", &c);
+
+    if(c == 'y' || c == 'Y')
+        return true;
+    return false;
+}
+
 void invoiceHeader(char *customerName, char *date) {
-    printf("\n\t-----------------------\n");
-    printf("\t--- INVOICE DETAILS ---\n");
-    printf("\t-----------------------\n");
     printf("Customer Name: %s\n", customerName);
     printf("Date: %s\n", date);
-    printf("------------------------------------------|\n");
-    printf("# | Name \t| Unit Price \t| Quantity\n");
-    printf("------------------------------------------|\n");
+    printf("----------------------------------------------------------|\n");
+    printf("# | Name \t| Quantity \t| Unit Price \t| Total\n");
+    printf("----------------------------------------------------------|\n");
 }
 
 void invoiceBody(struct Items item, int count) {
-    printf("%d | %s \t| $%.2f \t| %d\n", count, item.itemName, item.unitPrice, item.quantity);
-    printf("------------------------------------------|\n");
+    double total = item.quantity * item.unitPrice;
+    printf("%d | %s \t| %d \t\t| $%.2f \t| $%.2f\n", count, item.itemName, item.quantity, item.unitPrice, total);
+    printf("----------------------------------------------------------|\n");
 }
 
 void invoiceFooter(double totalPrice, double discount) {
-    printf("Total Price: \t\t\t $%.2f\n", totalPrice);
-    printf("Discount:  \t\t\t %.2f%%\n", discount*100);
+    printf("Total Price: \t\t\t\t $%.2f\n", totalPrice);
+    printf("Discount:  \t\t\t\t %.2f%%\n", discount*100);
     double finalPrice = totalPrice - (discount * totalPrice);
-    printf("Total Price: \t\t\t $%.2f\n", finalPrice);
-    printf("-------------BnAdel Restaurant-------------\n");
+    printf("Net Price: \t\t\t\t $%.2f\n", finalPrice);
+    printf("---------------------BnAdel Restaurant---------------------\n");
 }
 
 void customerData() {
@@ -212,12 +219,96 @@ void generateInvoice(struct Orders order) {
     }
 
     // Show The Whole Invoice Of The Current Customer
+    printf("\n\t\t-----------------------\n");
+    printf("\t\t--- INVOICE DETAILS ---\n");
+    printf("\t\t-----------------------\n");
     invoiceHeader(order.customerName, order.date);
-    double totalPrice = 0.0, discount = 0.2;
+    double totalPrice = 0.0, discount = 0.15;
     for (int i = 0; i < order.numOfItems; ++i) {
         totalPrice += (order.item[i].unitPrice * order.item[i].quantity);
         invoiceBody(order.item[i], i+1);
     }
     invoiceFooter(totalPrice, discount);
+
+    // Saving To File System
+    char c;
+    while(true) {
+        printf("\n--> Do You Want To Save The Invoice [y/n]?");
+        scanf("%c", &c);
+        getchar();
+
+        if(c == 'n' || c == 'y' || c == 'N' || c == 'Y') break;
+        else printf("|| Input Is Invalid .. TRY AGAIN ||");
+    }
+    if(c == 'y' || c == 'Y') {
+        // File Pointer
+        FILE *fInvoice = fopen("invoices.txt", "a+");
+        // Write The Content In The File
+        fwrite(&order, sizeof(struct Orders), 1, fInvoice);
+        printf("\n==== Saved Successfully!! ====\n\n");
+
+        fclose(fInvoice);
+    }
+    else {
+        printf("\n==== Data Not Saved!! ====\n\n");
+    }
 }
 
+void allInvoices() {
+    struct Orders order;
+    FILE *fInvoices = fopen("invoices.txt", "r");
+
+    printf("\n\t\t======================");
+    printf("\n\t\t==== ALL INVOICES ====");
+    printf("\n\t\t======================\n");
+    int count = 1;
+    while(fread(&order, sizeof(struct Orders), 1, fInvoices)) {
+        printf("\n\t\t>---- INVOICE [ %d ] ----<\n", count++);
+        invoiceHeader(order.customerName, order.date);
+        double totalPrice = 0.0, discount = 0.15;
+        for (int i = 0; i < order.numOfItems; ++i) {
+            totalPrice += (order.item[i].unitPrice * order.item[i].quantity);
+            invoiceBody(order.item[i], i+1);
+        }
+        invoiceFooter(totalPrice, discount);
+    }
+    fclose(fInvoices);
+}
+
+void searchInvoice() {
+    char customerName[50];
+    printf("\n--> Enter The Customer Name: ");
+    fgets(customerName, 50, stdin);
+    // To Avoid (\n)
+    customerName[strlen(customerName) - 1] = 0;
+    // To Avoid Spaces
+    strcpy(customerName, removeSpaces(customerName));
+
+    struct Orders order;
+    FILE *fInvoices = fopen("invoices.txt", "r");
+
+    printf("\n\t\t=========================");
+    printf("\n\t\tINVOICE OF, %s ", customerName);
+    printf("\n\t\t=========================\n");
+    bool isFound = false;
+    while(fread(&order, sizeof(struct Orders), 1, fInvoices)) {
+        if(!strcmp(order.customerName, customerName)) { // returns 0 if these strings are equal
+            invoiceHeader(order.customerName, order.date);
+            double totalPrice = 0.0, discount = 0.15;
+            for (int i = 0; i < order.numOfItems; ++i) {
+                totalPrice += (order.item[i].unitPrice * order.item[i].quantity);
+                invoiceBody(order.item[i], i+1);
+            }
+            invoiceFooter(totalPrice, discount);
+            isFound = true;
+        }
+    }
+    fclose(fInvoices);
+
+    if(!isFound) {
+        printf("\n--> Oops, Invoices Not Found For This Customer '%s' !!\n", customerName);
+    }
+}
+
+
+// الحمد لله
